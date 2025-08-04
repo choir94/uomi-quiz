@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UOMI Edu Quiz</title>
+  <style>
+    :root {--radius: 1rem;--shadow: 0 15px 30px -10px rgba(0,0,0,.15);font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+    *{box-sizing:border-box;}
+    body{margin:0;background:linear-gradient(135deg,#0f1e38,#1f3568);color:#f0f8ff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;}
+    .card{background:#1e2f5a;border-radius:1.5rem;max-width:600px;width:100%;padding:1.75rem;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+    .header{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem;}
+    .logo{width:48px;height:48px;flex-shrink:0;border-radius:.75rem;overflow:hidden;box-shadow:0 8px 20px -5px rgba(0,0,0,.3);}
+    .badge{display:inline-block;background:#ffcb05;color:#0f1e38;font-weight:600;padding:.25rem .75rem;border-radius:999px;font-size:.65rem;margin-bottom:.5rem;}
+    h1{margin:0;font-size:1.9rem;}
+    .subtitle{margin:2px 0 8px;font-size:.9rem;opacity:.85;}
+    .question-count{font-size:.85rem;opacity:.85;margin-top:4px;}
+    .question{margin:1rem 0;font-size:1.15rem;line-height:1.3;}
+    .answers{list-style:none;padding:0;margin:0;display:grid;gap:.75rem;}
+    .answers button{background:#273f8f;border:none;border-radius:1rem;padding:.9rem 1rem;cursor:pointer;font-size:1rem;display:flex;align-items:center;gap:.5rem;position:relative;transition:filter .2s;color:#fff;}
+    .answers button:hover{filter:brightness(1.08);}
+    .answers button.correct{background:#1f8f46;color:#fff;}
+    .answers button.wrong{background:#d9534f;color:#fff;}
+    .footer{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;}
+    .btn{background:#635dff;border:none;color:#fff;padding:.75rem 1.25rem;border-radius:999px;font-weight:600;cursor:pointer;letter-spacing:.5px;display:inline-flex;align-items:center;gap:.5rem;}
+    .scoreboard{margin-top:1rem;background:rgba(255,255,255,.05);padding:1rem;border-radius:1rem;}
+    .leaderboard{margin-top:1rem;}
+    .leaderboard h2{margin:0;font-size:1.1rem;}
+    .list{padding:0;margin:0;list-style:none;margin-top:.5rem;}
+    .list li{display:flex;justify-content:space-between;background:rgba(255,255,255,.08);padding:.5rem .75rem;border-radius:.75rem;margin-bottom:.4rem;font-size:.9rem;}
+    .small{font-size:.7rem;opacity:.8;}
+    .hidden{display:none;}
+    input{font-size:1rem;border-radius:8px;border:none;padding:.5rem;}
+    .footer-note{margin-top:12px;font-size:.65rem;opacity:.7;text-align:center;}
+    a { color: #a0c8ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card" aria-label="UOMI Education Quiz">
+    <div class="header">
+      <div class="logo">
+        <img src="https://raw.githubusercontent.com/choir94/uomi-quiz/main/Logouomi.png" alt="UOMI Logo" style="width:100%;height:100%;object-fit:contain;" />
+      </div>
+      <div style="flex:1;">
+        <div class="badge">UOMI Edu Quiz</div>
+        <h1 style="margin:4px 0 0;">Test Your UOMI Knowledge</h1>
+        <div class="subtitle">Learn core concepts: agents, consensus, testnets, and tokenomics</div>
+      </div>
+    </div>
+    <div class="question-count" id="progress">Question 1 of 15</div>
+    <div class="question" id="questionText">Loading...</div>
+    <ul class="answers" id="answers"></ul>
+    <div class="footer">
+      <div id="feedback" class="small"></div>
+      <button class="btn" id="nextBtn" disabled>Next</button>
+    </div>
+    <div class="scoreboard hidden" id="scoreboard">
+      <h2>Final Score: <span id="finalScore"></span>/15</h2>
+      <div class="small">Enter your nickname to save to local leaderboard.</div>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+        <input type="text" id="nickname" placeholder="Nickname" maxlength="12" />
+        <button class="btn" id="saveBtn">Save</button>
+      </div>
+      <div class="leaderboard" id="leaderboardSection">
+        <h2>Local Leaderboard</h2>
+        <ul class="list" id="leaderboardList"></ul>
+        <div class="small">Top 5 scores stored in browser.</div>
+      </div>
+      <button class="btn" id="retryBtn" style="margin-top:1rem;">Retry Quiz</button>
+    </div>
+    <div class="footer-note">
+      Powered by UOMI • Learn more at <a href="https://uomi.ai" target="_blank" rel="noopener">uomi.ai</a>
+    </div>
+  </div>
+  <script>
+    const QUESTIONS = [
+      {q:"What is UOMI in the blockchain context?",choices:["An AI-native platform integrating chain and agents","A decentralized stablecoin","A centralized token exchange","A fiat payment network"],a:0},
+      {q:"What is the role of a validator in the UOMI Network?",choices:["Edit the website UI","Run a node to secure the network and validate transactions","Manage the official Twitter account","Automatically issue NFTs"],a:1},
+      {q:"What is a UOMI Agent?",choices:["A smart contract for automatic staking","An AI entity that can interact and assist users on-chain","A governance token","Export data from the node"],a:1},
+      {q:"One way to become a Core Contributor is to:",choices:["Only comment on Twitter without technical contribution","Develop an AI Agent or contribute directly on GitHub","Change UOMI's logo without permission","Buy large amounts of $UOMI"],a:1},
+      {q:"Where can you get UOMI testnet tokens?",choices:["From the official UOMI faucet","Buy on a centralized exchange","Send an email to support","Mine them traditionally"],a:0},
+      {q:"What is one benefit of the Testnet Participant role?",choices:["Early access to new features","Become a Discord admin","Get mainnet tokens immediately","Voting rights on all proposals"],a:0},
+      {q:"What is Synthra in the UOMI ecosystem?",choices:["A token swap platform on testnet","An AI chat application","A validator node","The official wallet"],a:0},
+      {q:"How can you get the OG role in UOMI?",choices:["Hold the Testnet Participant or Validator role before token launch","Buy $UOMI on an exchange","Join a Twitter giveaway","Send an email to the team"],a:0},
+      {q:"What is one benefit of the UOMI Expert role?",choices:["Access to strategic calls with the team","Free merchandise","Direct voting rights on mainnet","Become the Twitter admin"],a:0},
+      {q:"What is the function of Simulacra.bet on UOMI testnet?",choices:["A betting platform using testnet tokens","An NFT marketplace","The official wallet","A discussion forum"],a:0},
+      {q:"What is the minimum Discord level for Elite Member?",choices:["5","10","15","20"],a:2},
+      {q:"What is the minimum requirement to be an Engaged Member?",choices:["Discord Level 5+","Discord Level 10+","Discord Level 1+","Discord Level 20+"],a:0},
+      {q:"One task of a Core Contributor is...",choices:["Actively contribute to UOMI's GitHub","Only read updates","Invite friends to Discord","Change the website theme"],a:0},
+      {q:"Why do validators get $UOMI rewards on testnet?",choices:["As an incentive for running a node","To pay for hosting","To buy merchandise","For promotion purposes"],a:0},
+      {q:"What happens if you are inactive in the Role Rewards Program?",choices:["You may be demoted or removed from your role","Nothing will happen","You get a prize","You automatically level up"],a:0}
+    ];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    let current = 0;
+    let score = 0;
+    let answered = false;
+    let quizQuestions = shuffle([...QUESTIONS]);
+
+    const questionText = document.getElementById('questionText');
+    const answersEl = document.getElementById('answers');
+    const progress = document.getElementById('progress');
+    const nextBtn = document.getElementById('nextBtn');
+    const feedback = document.getElementById('feedback');
+    const scoreboard = document.getElementById('scoreboard');
+    const finalScore = document.getElementById('finalScore');
+    const nickname = document.getElementById('nickname');
+    const saveBtn = document.getElementById('saveBtn');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const retryBtn = document.getElementById('retryBtn');
+
+    function loadQuestion() {
+      answered = false;
+      nextBtn.disabled = true;
+      feedback.textContent = '';
+      const item = quizQuestions[current];
+      questionText.textContent = item.q;
+      progress.textContent = `Question ${current+1} of ${quizQuestions.length}`;
+      answersEl.innerHTML = '';
+      // shuffle choices while tracking correct
+      const choiceIndices = item.choices.map((c,i)=>i);
+      shuffle(choiceIndices);
+      const mapped = choiceIndices.map(i => ({text: item.choices[i], originalIndex: i}));
+      const correctNewIndex = mapped.findIndex(m => m.originalIndex === item.a);
+      mapped.forEach((m,i)=>{
+        const btn = document.createElement('button');
+        btn.type='button';
+        btn.textContent = m.text;
+        btn.addEventListener('click', ()=> select(i, btn, correctNewIndex));
+        answersEl.appendChild(btn);
+      });
+    }
+
+    function select(choiceIndex, btn, correctIndex) {
+      if(answered) return;
+      answered = true;
+      nextBtn.disabled = false;
+      const allButtons = answersEl.querySelectorAll('button');
+      allButtons.forEach((b,i)=>{
+        b.disabled = true;
+        if(i === correctIndex) b.classList.add('correct');
+        if(i === choiceIndex && i !== correctIndex) b.classList.add('wrong');
+      });
+      if(choiceIndex === correctIndex){ score++; feedback.textContent='Correct!'; }
+      else { feedback.textContent='Wrong.'; }
+    }
+
+    nextBtn.addEventListener('click', ()=>{
+      current++;
+      if(current >= quizQuestions.length){ finish(); }
+      else { loadQuestion(); }
+    });
+
+    function finish(){
+      progress.textContent='Completed';
+      nextBtn.disabled=true;
+      nextBtn.style.display='none';
+      scoreboard.classList.remove('hidden');
+      finalScore.textContent=score;
+      renderLeaderboard();
+    }
+
+    function getLeaderboard(){
+      try { return JSON.parse(localStorage.getItem('uomi_quiz_lb')||'[]'); } catch { return []; }
+    }
+
+    function saveLeaderboard(data){ localStorage.setItem('uomi_quiz_lb', JSON.stringify(data)); }
+
+    function renderLeaderboard(){
+      const lb = getLeaderboard();
+      lb.sort((a,b)=> b.score - a.score || a.when - b.when);
+      const top = lb.slice(0,5);
+      leaderboardList.innerHTML='';
+      if(top.length===0){ leaderboardList.innerHTML='<li>No scores yet</li>'; return; }
+      top.forEach(entry=>{
+        const li = document.createElement('li');
+        li.innerHTML = `<div><strong>${entry.name}</strong></div><div>${entry.score}/${quizQuestions.length} <span class='small'>${new Date(entry.when).toLocaleDateString()}</span></div>`;
+        leaderboardList.appendChild(li);
+      });
+    }
+
+    saveBtn.addEventListener('click', ()=>{
+      const name = nickname.value.trim() || 'Anon';
+      const lb = getLeaderboard();
+      lb.push({name, score, when: Date.now()});
+      saveLeaderboard(lb);
+      renderLeaderboard();
+      saveBtn.textContent='Saved!';
+      setTimeout(()=>{ saveBtn.textContent='Save'; },1200);
+    });
+
+    retryBtn.addEventListener('click', ()=>{
+      current=0; score=0; quizQuestions = shuffle([...QUESTIONS]);
+      document.getElementById('nextBtn').style.display='inline-flex';
+      scoreboard.classList.add('hidden');
+      loadQuestion();
+    });
+
+    // initialize
+    loadQuestion();
+    renderLeaderboard();
+  </script>
+</body>
+</html>
